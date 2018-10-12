@@ -31,13 +31,13 @@ public class TcpServer {
 
                 request += "\n";
 
-                int responses = 1000;
+                int responses = 100;
                 while (--responses > 0) {
                     outToClient.writeBytes(request);
                     outToClient.flush();
                     System.out.println("Sent: " + request);
 
-                    Thread.sleep(6000);
+                    Thread.sleep(80000);
                 }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
