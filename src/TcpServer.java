@@ -7,6 +7,8 @@ public class TcpServer {
     private static final int SERVER_PORT = 4991;
 
     private ServerSocket socket;
+    private int timeBetweenResponses;
+    private int noOfResponses;
 
     public TcpServer() {
         try {
@@ -14,6 +16,14 @@ public class TcpServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void SetTimeBetweenResponses(int timeBetweenResponses) {
+        this.timeBetweenResponses = timeBetweenResponses;
+    }
+
+    public void SetNoOfResponses(int noOfResponses) {
+        this.noOfResponses = noOfResponses;
     }
 
     public void Run() {
@@ -31,13 +41,13 @@ public class TcpServer {
 
                 request += "\n";
 
-                int responses = 100;
+                int responses = noOfResponses;
                 while (--responses > 0) {
                     outToClient.writeBytes(request);
                     outToClient.flush();
                     System.out.println("Sent: " + request);
 
-                    Thread.sleep(80000);
+                    Thread.sleep(timeBetweenResponses);
                 }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
