@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -28,9 +25,12 @@ public class TcpServer {
                 BufferedReader inFromClient =
                         new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 DataOutputStream outToClient = new DataOutputStream(clientSocket.getOutputStream());
+
                 request = inFromClient.readLine();
                 System.out.println("Received: " + request);
+
                 outToClient.writeBytes(request);
+                outToClient.flush();
                 System.out.println("Sent: " + request);
             } catch (IOException e) {
                 e.printStackTrace();
