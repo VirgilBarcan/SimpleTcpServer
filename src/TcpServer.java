@@ -29,6 +29,7 @@ public class TcpServer {
                 request = inFromClient.readLine();
                 System.out.println("Received: " + request);
 
+                request += "\n";
                 outToClient.writeBytes(request);
                 outToClient.flush();
                 System.out.println("Sent: " + request);
