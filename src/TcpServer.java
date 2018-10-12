@@ -30,10 +30,16 @@ public class TcpServer {
                 System.out.println("Received: " + request);
 
                 request += "\n";
-                outToClient.writeBytes(request);
-                outToClient.flush();
-                System.out.println("Sent: " + request);
-            } catch (IOException e) {
+
+                int responses = 1000;
+                while (--responses > 0) {
+                    outToClient.writeBytes(request);
+                    outToClient.flush();
+                    System.out.println("Sent: " + request);
+
+                    Thread.sleep(6000);
+                }
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
         }
