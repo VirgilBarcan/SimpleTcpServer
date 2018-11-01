@@ -2,56 +2,67 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TcpServer {
+public class TcpServer implements Runnable {
 
-    private static final int SERVER_PORT = 4991;
+    private static final int SERVER_PORT = 5991;
 
     private ServerSocket socket;
-    private int timeBetweenResponses;
-    private int noOfResponses;
+    private BufferedReader inFromClient;
+    private DataOutputStream outToClient;
+    private boolean isStopped;
 
     public TcpServer() {
         try {
             socket = new ServerSocket(SERVER_PORT);
+            isStopped = false;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void SetTimeBetweenResponses(int timeBetweenResponses) {
-        this.timeBetweenResponses = timeBetweenResponses;
+    public synchronized void stop() {
+        isStopped = true;
     }
 
-    public void SetNoOfResponses(int noOfResponses) {
-        this.noOfResponses = noOfResponses;
+    private synchronized boolean isStopped() {
+        return isStopped;
     }
 
-    public void Run() {
-        String request;
-        while (true) {
+    private void processClient() {
+        while (!isStopped()) {
             try {
-                Socket clientSocket = socket.accept();
-
-                BufferedReader inFromClient =
-                        new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                DataOutputStream outToClient = new DataOutputStream(clientSocket.getOutputStream());
-
-                request = inFromClient.readLine();
-                System.out.println("Received: " + request);
-
-                request += "\n";
-
-                int responses = noOfResponses;
-                while (--responses > 0) {
-                    outToClient.writeBytes(request);
-                    outToClient.flush();
-                    System.out.println("Sent: " + request);
-
-                    Thread.sleep(timeBetweenResponses);
-                }
-            } catch (IOException | InterruptedException e) {
+                String message = receiveMessage();
+                sendMessage(message);
+                System.out.println();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public String receiveMessage() throws IOException {
+        String request = inFromClient.readLine();
+        System.out.println("Received: " + request);
+        return request;
+    }
+
+    public void sendMessage(String message) throws IOException {
+        outToClient.writeBytes(message + "\n");
+        outToClient.flush();
+        System.out.println("Sent: " + message);
+    }
+
+    @Override
+    public void run() {
+        try {
+            System.out.println("Starting server...");
+            Socket clientSocket = socket.accept();
+            inFromClient =  new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            outToClient = new DataOutputStream(clientSocket.getOutputStream());
+            processClient();
+            System.out.println("Server stopped.");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
