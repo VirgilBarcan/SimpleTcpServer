@@ -1,16 +1,41 @@
+import java.io.IOException;
+import java.util.Scanner;
+
 public class Main {
 
-    public static void main(String[] args) {
-        TcpServer tcpServer = new TcpServer();
+    private TcpServer tcpServer;
 
-        if (args.length == 2) {
-            tcpServer.SetTimeBetweenResponses(Integer.parseInt(args[0]));
-            tcpServer.SetNoOfResponses(Integer.parseInt(args[1]));
+    private void userInteraction() {
+        Scanner scanner = new Scanner(System.in);
+
+        while (scanner.hasNextLine()) {
+            String command = scanner.nextLine();
+            System.out.println(command);
+
+            if (command.equals("quit")) {
+                tcpServer.stop();
+                break;
+            }
+
+            try {
+                tcpServer.sendMessage(command);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
 
-        System.out.println("Starting server...");
-        tcpServer.Run();
-        System.out.println("Server stopped.");
+    public void work() {
+        tcpServer = new TcpServer();
+        Thread serverThread = new Thread(tcpServer);
+        serverThread.start();
+
+        userInteraction();
+    }
+
+    public static void main(String[] args) {
+        Main main = new Main();
+        main.work();
     }
 
 }
