@@ -1,6 +1,9 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class TcpServer implements Runnable {
 
@@ -10,11 +13,15 @@ public class TcpServer implements Runnable {
     private BufferedReader inFromClient;
     private DataOutputStream outToClient;
     private boolean isStopped;
+    private Lock lock;
+    private Condition condition;
 
     public TcpServer() {
         try {
             socket = new ServerSocket(SERVER_PORT);
             isStopped = false;
+            lock = new ReentrantLock();
+            condition = lock.newCondition();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -22,6 +29,9 @@ public class TcpServer implements Runnable {
 
     public synchronized void stop() {
         isStopped = true;
+        lock.lock();
+        condition.signal();
+        lock.unlock();
     }
 
     private synchronized boolean isStopped() {
@@ -29,14 +39,20 @@ public class TcpServer implements Runnable {
     }
 
     private void processClient() {
-        while (!isStopped()) {
-            try {
-                String message = receiveMessage();
-                sendMessage(message);
-                System.out.println();
-            } catch (IOException e) {
-                e.printStackTrace();
+        try {
+            String message = receiveMessage();
+            sendMessage(message);
+            System.out.println();
+
+            while (!isStopped()) {
+                // wait for messages to be sent
+                lock.lock();
+                condition.await();
+                lock.unlock();
             }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            lock.unlock();
         }
     }
 
@@ -47,6 +63,10 @@ public class TcpServer implements Runnable {
     }
 
     public void sendMessage(String message) throws IOException {
+        lock.lock();
+        condition.signal();
+        lock.unlock();
+
         outToClient.writeBytes(message + "\n");
         outToClient.flush();
         System.out.println("Sent: " + message);
