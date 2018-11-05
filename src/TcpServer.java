@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Instant;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -29,9 +30,9 @@ public class TcpServer implements Runnable {
 
     public synchronized void stop() {
         isStopped = true;
-        lock.lock();
-        condition.signal();
-        lock.unlock();
+//        lock.lock();
+//        condition.signal();
+//        lock.unlock();
     }
 
     private synchronized boolean isStopped() {
@@ -40,17 +41,19 @@ public class TcpServer implements Runnable {
 
     private void processClient() {
         try {
-            String message = receiveMessage();
-            sendMessage(message);
-            System.out.println();
-
             while (!isStopped()) {
-                // wait for messages to be sent
-                lock.lock();
-                condition.await();
-                lock.unlock();
+                String message = receiveMessage();
+                sendMessage(message);
+                System.out.println();
             }
-        } catch (IOException | InterruptedException e) {
+
+//            while (!isStopped()) {
+//                // wait for messages to be sent
+//                lock.lock();
+//                condition.await();
+//                lock.unlock();
+//            }
+        } catch (IOException e) {
             e.printStackTrace();
             lock.unlock();
         }
@@ -58,18 +61,20 @@ public class TcpServer implements Runnable {
 
     public String receiveMessage() throws IOException {
         String request = inFromClient.readLine();
-        System.out.println("Received: " + request);
+        Instant instant = Instant.now();
+        System.out.println("[" + instant + "] " + "Received: " + request);
         return request;
     }
 
     public void sendMessage(String message) throws IOException {
-        lock.lock();
-        condition.signal();
-        lock.unlock();
+//        lock.lock();
+//        condition.signal();
+//        lock.unlock();
 
         outToClient.writeBytes(message + "\n");
         outToClient.flush();
-        System.out.println("Sent: " + message);
+        Instant instant = Instant.now();
+        System.out.println("[" + instant + "] " + "Sent: " + message);
     }
 
     @Override
